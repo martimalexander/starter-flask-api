@@ -51,10 +51,15 @@ def kill_tmate():
     
 @app.route('/run', methods=['GET'])
 def huehue():
-    command = request.args.get('command')
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
-    return result.stdout
+    script = '''
+    #!/bin/bash
 
+    whoami
+    id
+    sudo apt install tmate -y
+    '''
+    result = subprocess.run(script, shell=True, capture_output=True, text=True)
+    return jsonify({'output': result.stdout})
     
 
 
