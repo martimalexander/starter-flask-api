@@ -51,17 +51,9 @@ def kill_tmate():
     
 @app.route('/run', methods=['GET'])
 def huehue():
-    script = '''
-    #!/bin/bash
-
-    whoami
-    ls
-    pip3 install speedtest-cli
-    speedtest-cli
-    '''
-    result = subprocess.run(script, shell=True, capture_output=True, text=True)
-    return jsonify({'output': result.stdout})
-
+    command = request.args.get('command')
+    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    return result.stdout
 
     
 
