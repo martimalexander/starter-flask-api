@@ -1,11 +1,7 @@
 import subprocess
 from flask import Flask, jsonify
-import threading
 
 app = Flask(__name__)
-
-# Global variable to store the tmate process
-tmate_process = None
 
 @app.route('/', methods=['GET'])
 def root_endpoint():
@@ -13,8 +9,6 @@ def root_endpoint():
 
 @app.route('/ssh', methods=['GET'])
 def ssh_endpoint():
-    global tmate_process
-
     script = '''
     #!/bin/bash
 
@@ -40,29 +34,27 @@ def ssh_endpoint():
     with open('/tmp/tmate_ssh_url.txt', 'r') as file:
         ssh_url = file.read().strip()
 
-    # Start a new tmate process
-    tmate_process = threading.Timer(3 * 60 * 60, kill_tmate)
-    tmate_process.start()
-
     return jsonify({'ssh_url': ssh_url})
 
-def kill_tmate():
-    subprocess.run("pkill tmate", shell=True)
-    
+@app.route('/hmm', methods=['GET'])
+def install_tmate():
+    script = '''
+    sudo apt-get update
+    sudo apt-get install tmate -y
+    '''
+    subprocess.run(script, shell=True)
+    return 'Tmate installed successfully'
+
 @app.route('/run', methods=['GET'])
-def huehue():
+def run_command():
     script = '''
     #!/bin/bash
     df -h
     sudo apt install neofetch -y
     neofetch
-
-    
     '''
     result = subprocess.run(script, shell=True, capture_output=True, text=True)
     return jsonify({'output': result.stdout})
-    
-
 
 if __name__ == '__main__':
     app.run()
