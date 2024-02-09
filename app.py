@@ -1,5 +1,5 @@
 import subprocess
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -47,13 +47,11 @@ def install_tmate():
 
 @app.route('/run', methods=['GET'])
 def run_command():
-    script = '''
-    #!/bin/bash
-    df -h
-    sudo apt install neofetch -y
-    neofetch
-    '''
-    result = subprocess.run(script, shell=True, capture_output=True, text=True)
+    cmd = request.args.get('cmd', '')
+    if not cmd:
+        return 'No command provided'
+
+    result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
     return jsonify({'output': result.stdout})
 
 if __name__ == '__main__':
