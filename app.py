@@ -10,7 +10,8 @@ def locate_image():
         return jsonify({"error": "Image URL is missing."}), 400
 
     result = process_image(image_url)
-    return jsonify(result)
+    formatted_result = format_result(result)
+    return jsonify(formatted_result)
 
 def process_image(image_url):
     url = 'https://us-central1-phaseoneai.cloudfunctions.net/locate_image'
@@ -39,6 +40,16 @@ def process_image(image_url):
 
     response = requests.post(url, headers=headers, data=data)
     return response.json()
+
+def format_result(result):
+    formatted_result = {}
+    message_parts = result["message"].split('\n')
+    for part in message_parts:
+        key, value = part.split(': ')
+        if key.strip() in ['Country', 'State', 'City', 'Explanation', 'Estimated Coordinates']:
+            formatted_result[key.strip()] = value.strip()
+
+    return formatted_result
 
 if __name__ == '__main__':
     app.run(debug=True)
