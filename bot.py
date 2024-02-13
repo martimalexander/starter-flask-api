@@ -1,28 +1,44 @@
-from pyrogram import Client, filters
-import subprocess
+from flask import Flask, request
+import requests
 
-# Fill in your bot token, api_id, and api_hash
-api_id = 9907811
-api_hash = "b5adb7f7d4a096750edec1bc6daacd56"
-bot_token = "6072139735:AAHr5Lim0mx27SDqJfBGD-4-kFoGK8cbI7c"
+app = Flask(__name__)
 
-# Create a Pyrogram client
-app = Client("my_bot", api_id=api_id, api_hash=api_hash, bot_token=bot_token)
+@app.route('/locate', methods=['GET'])
+def locate_image():
+    image_url = request.args.get('img')
+    if not image_url:
+        return "Error: Image URL is missing.", 400
 
-# Define a handler for the /run command
-@app.on_message(filters.command("run") & filters.private)
-def run_command(client, message):
-    # Extract the command from the message
-    command = message.text.split(maxsplit=1)[1]
-    
-    # Execute the command
-    try:
-        result = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT, encoding="utf-8")
-    except subprocess.CalledProcessError as e:
-        result = f"Error: {e.output}"
-    
-    # Send the result back to the user
-    message.reply_text(result)
+    result = process_image(image_url)
+    return result
 
-# Start the bot
-app.run()
+def process_image(image_url):
+    url = 'https://us-central1-phaseoneai.cloudfunctions.net/locate_image'
+
+    headers = {
+        'Host': 'us-central1-phaseoneai.cloudfunctions.net',
+        'Content-Type': 'multipart/form-data; boundary=dart-http-boundary-zEDT_cKh5lXBX_ZzZw9ZYLB8wPP+Zf-njJ-Oz80+cHqm2Sb2y1W',
+        'Origin': 'https://geospy.web.app',
+        'Referer': 'https://geospy.web.app/',
+    }
+
+    # Fetch image data from URL
+    image_data = requests.get(image_url).content
+
+    data = (
+        b'--dart-http-boundary-zEDT_cKh5lXBX_ZzZw9ZYLB8wPP+Zf-njJ-Oz80+cHqm2Sb2y1W\r\n'
+        b'Content-Disposition: form-data; name="list_of_strings"\r\n\r\n'
+        b'[]\r\n'
+        b'--dart-http-boundary-zEDT_cKh5lXBX_ZzZw9ZYLB8wPP+Zf-njJ-Oz80+cHqm2Sb2y1W\r\n'
+        b'Content-Type: image/jpeg\r\n'
+        b'Content-Disposition: form-data; name="image"; filename="online_image.jpg"\r\n\r\n'
+        + image_data +
+        b'\r\n'
+        b'--dart-http-boundary-zEDT_cKh5lXBX_ZzZw9ZYLB8wPP+Zf-njJ-Oz80+cHqm2Sb2y1W--\r\n'
+    )
+
+    response = requests.post(url, headers=headers, data=data)
+    return response.text
+
+if __name__ == '__main__':
+    app.run(debug=True)
