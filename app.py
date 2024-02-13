@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 import requests
 
 app = Flask(__name__)
@@ -7,10 +7,10 @@ app = Flask(__name__)
 def locate_image():
     image_url = request.args.get('img')
     if not image_url:
-        return "Error: Image URL is missing.", 400
+        return jsonify({"error": "Image URL is missing."}), 400
 
     result = process_image(image_url)
-    return result
+    return jsonify(result)
 
 def process_image(image_url):
     url = 'https://us-central1-phaseoneai.cloudfunctions.net/locate_image'
@@ -38,7 +38,7 @@ def process_image(image_url):
     )
 
     response = requests.post(url, headers=headers, data=data)
-    return response.text
+    return response.json()
 
 if __name__ == '__main__':
     app.run(debug=True)
